@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "setup-vercel-env": "node setup-vercel-env.js",
+    "copy-env": "bash copy-env-to-vercel.sh"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.4",
