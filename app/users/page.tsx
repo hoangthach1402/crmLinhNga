@@ -1,53 +1,54 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { RefreshCw, Download, Plus, Search } from 'lucide-react';
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  company: string;
-  position: string;
-  status: string;
-  created_at: string;
-}
+import { useState, useRef } from 'react';
+import { RefreshCw, Download, Plus, Search, Edit, Trash2 } from 'lucide-react';
+import AddUserModal from '../components/AddUserModal';
+import EditUserModal from '../components/EditUserModal';
+import { useUsers, useDeleteUser, User } from '../hooks/useUsers';
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, isLoading, error, refetch } = useUsers();
+  const deleteUserMutation = useDeleteUser();
+  
   const [searchTerm, setSearchTerm] = useState('');
-  const [lastUpdated, setLastUpdated] = useState<string>('');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  
+  // Ref to preserve scroll position
+  const scrollRef = useRef<HTMLDivElement>(null);  const handleUserAdded = () => {
+    // React Query sẽ tự động invalidate và refetch
+    // Không cần làm gì thêm
+  };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const handleUserUpdated = () => {
+    // React Query sẽ tự động invalidate và refetch
+    // Không cần làm gì thêm
+  };
 
-  const fetchUsers = async () => {
+  const handleEditUser = (user: User) => {
+    setSelectedUser(user);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDeleteUser = async (userId: number) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa user này?')) {
+      return;
+    }
+
     try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await fetch('/api/users');
-      const data = await response.json();
-      
-      if (data.success) {
-        setUsers(data.users);
-        setLastUpdated(new Date(data.timestamp).toLocaleString('vi-VN'));
-      } else {
-        setError(data.error || 'Không thể tải dữ liệu');
-      }
+      await deleteUserMutation.mutateAsync(userId);
+      // Optimistic update sẽ tự động xử lý UI
     } catch (err) {
-      setError('Lỗi kết nối tới server');
-      console.error('Fetch error:', err);
-    } finally {
-      setLoading(false);
+      alert('Có lỗi xảy ra khi xóa user: ' + (err as Error).message);
     }
   };
 
-  const filteredUsers = users.filter(user => 
+  // Extract data from React Query
+  const users = data?.users || [];
+  const lastUpdated = data?.timestamp ? new Date(data.timestamp).toLocaleString('vi-VN') : '';
+  
+  const filteredUsers = users.filter((user: User) => 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.company.toLowerCase().includes(searchTerm.toLowerCase())
@@ -66,8 +67,7 @@ export default function UsersPage() {
     const columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
     return `${columns[colIndex]}${rowIndex + 2}`;
   };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="p-6">
         <div className="flex justify-center items-center h-64">
@@ -86,9 +86,9 @@ export default function UsersPage() {
             <div className="text-red-400 text-2xl mr-3">⚠️</div>
             <div className="flex-1">
               <h3 className="text-lg font-medium text-red-800">Lỗi tải dữ liệu</h3>
-              <p className="mt-1 text-red-700">{error}</p>
+              <p className="mt-1 text-red-700">{error.message}</p>
               <button 
-                onClick={fetchUsers}
+                onClick={() => refetch()}
                 className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
@@ -100,9 +100,8 @@ export default function UsersPage() {
       </div>
     );
   }
-
   return (
-    <div className="p-6 space-y-6">
+    <div ref={scrollRef} className="p-6 space-y-6">
       {/* Header */}
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -117,20 +116,22 @@ export default function UsersPage() {
               )}
             </p>
           </div>
-          <div className="flex space-x-3">
-            <button 
-              onClick={fetchUsers}
-              disabled={loading}
+          <div className="flex space-x-3">            <button 
+              onClick={() => refetch()}
+              disabled={isLoading}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center disabled:opacity-50"
             >
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
               Làm mới
             </button>
             <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
               <Download className="w-4 h-4 mr-2" />
               Xuất Excel
             </button>
-            <button className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center">
+            <button 
+              onClick={() => setIsAddModalOpen(true)}
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center"
+            >
               <Plus className="w-4 h-4 mr-2" />
               Thêm User
             </button>
@@ -201,19 +202,20 @@ export default function UsersPage() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Chức vụ (F1)
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                </th>                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Trạng thái (G1)
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ngày tạo (H1)
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Thao tác
+                </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredUsers.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+            <tbody className="bg-white divide-y divide-gray-200">{filteredUsers.length === 0 ? (
+              <tr>
+                <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
                     <div className="flex flex-col items-center">
                       <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
@@ -258,10 +260,26 @@ export default function UsersPage() {
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(user.status)}`}>
                         {user.status}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    </td>                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{user.created_at}</div>
                       <div className="text-xs text-gray-500">{getColumnLabel(7, index)}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">                      <div className="flex space-x-2">
+                        <button 
+                          onClick={() => handleEditUser(user)}
+                          className="text-blue-600 hover:text-blue-900 p-1 rounded"
+                          title="Chỉnh sửa"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteUser(user.id)}
+                          className="text-red-600 hover:text-red-900 p-1 rounded"
+                          title="Xóa"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -287,9 +305,24 @@ export default function UsersPage() {
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm"
           >
             Mở Google Sheets
-          </a>
-        </div>
-      </div>
+          </a>        </div>
+      </div>      {/* Add User Modal */}
+      <AddUserModal 
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onUserAdded={handleUserAdded}
+      />
+
+      {/* Edit User Modal */}
+      <EditUserModal 
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedUser(null);
+        }}
+        onUserUpdated={handleUserUpdated}
+        user={selectedUser}
+      />
     </div>
   );
 }
