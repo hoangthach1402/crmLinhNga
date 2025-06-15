@@ -196,13 +196,13 @@ export default function UsersPage() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Số điện thoại (D1)
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                </th>                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Công ty (E1)
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Chức vụ (F1)
-                </th>                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Trạng thái (G1)
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -213,9 +213,9 @@ export default function UsersPage() {
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">{filteredUsers.length === 0 ? (
-              <tr>
-                <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
+            <tbody className="bg-white divide-y divide-gray-200">              {filteredUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
                     <div className="flex flex-col items-center">
                       <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
@@ -259,12 +259,13 @@ export default function UsersPage() {
                       <div className="text-xs text-gray-500 mb-1">{getColumnLabel(6, index)}</div>
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(user.status)}`}>
                         {user.status}
-                      </span>
-                    </td>                    <td className="px-6 py-4 whitespace-nowrap">
+                      </span>                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{user.created_at}</div>
                       <div className="text-xs text-gray-500">{getColumnLabel(7, index)}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">                      <div className="flex space-x-2">
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex space-x-2">
                         <button 
                           onClick={() => handleEditUser(user)}
                           className="text-blue-600 hover:text-blue-900 p-1 rounded"
@@ -281,8 +282,7 @@ export default function UsersPage() {
                         </button>
                       </div>
                     </td>
-                  </tr>
-                ))
+                  </tr>                ))
               )}
             </tbody>
           </table>
