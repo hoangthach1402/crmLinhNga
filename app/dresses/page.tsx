@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Plus, Edit, Trash2, Package, TrendingUp, AlertTriangle, DollarSign, Filter, X } from 'lucide-react';
 import { useDresses, useDeleteDress, DressFilters } from '../hooks/useDresses';
@@ -39,25 +39,38 @@ const DRESS_TYPES = [
   'HAUTE COUTURE'
 ];
 
-export default function DressesPage() {
+function DressesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+    // Initialize from URL params
+  const [currentPage, setCurrentPage] = useState(1);
   
-  // Initialize from URL params
-  const [currentPage, setCurrentPage] = useState(() => {
-    const page = searchParams?.get('page');
-    return page ? parseInt(page) : 1;
-  });
   const [filters, setFilters] = useState<DressFilters>(() => {
     const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
     return {
-      search: searchParams?.get('search') || '',
-      month: searchParams?.get('month') || currentMonth, // Mặc định là tháng hiện tại
-      designer: searchParams?.get('designer') || '',
-      time_dap: searchParams?.get('time_dap') ? parseInt(searchParams.get('time_dap')!) : undefined,
-      time_dinh: searchParams?.get('time_dinh') ? parseInt(searchParams.get('time_dinh')!) : undefined,
+      search: '',
+      month: currentMonth, // Mặc định là tháng hiện tại
+      designer: '',
+      time_dap: undefined,
+      time_dinh: undefined,
     };
   });
+  
+  // Use useEffect to initialize from URL params after component mounts
+  useEffect(() => {
+    if (searchParams) {
+      const page = searchParams.get('page');
+      if (page) setCurrentPage(parseInt(page));
+      
+      const currentMonth = new Date().toISOString().slice(0, 7);
+      setFilters({
+        search: searchParams.get('search') || '',
+        month: searchParams.get('month') || currentMonth,
+        designer: searchParams.get('designer') || '',        time_dap: searchParams.get('time_dap') ? parseInt(searchParams.get('time_dap')!) : undefined,
+        time_dinh: searchParams.get('time_dinh') ? parseInt(searchParams.get('time_dinh')!) : undefined,
+      });
+    }
+  }, [searchParams]);
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -769,7 +782,20 @@ export default function DressesPage() {
             </button>
           </div>
         </div>
-      )}
-    </div>
+      )}    </div>
+  );
+}
+
+export default function DressesPage() {
+  return (
+    <Suspense fallback={
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    }>
+      <DressesContent />
+    </Suspense>
   );
 }
