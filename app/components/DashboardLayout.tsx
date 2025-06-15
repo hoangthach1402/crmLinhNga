@@ -14,7 +14,8 @@ import {
   Home,
   FileText,
   Phone,
-  Mail
+  Mail,
+  Shirt
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -25,6 +26,7 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Users', href: '/users', icon: Users },
   { name: 'Products', href: '/products', icon: Package },
+  { name: 'Dresses', href: '/dresses', icon: Shirt },
   { name: 'Orders', href: '/orders', icon: ShoppingCart },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'Contacts', href: '/contacts', icon: Phone },
